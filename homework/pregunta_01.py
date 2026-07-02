@@ -71,3 +71,67 @@ def pregunta_01():
 
 
     """
+import os
+import zipfile
+import pandas as pd
+
+def descomprimir_archivo():
+    zip_path = "files/input.zip"
+    extract_path = "input"
+    
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall()
+    
+    print("Archivo descomprimido correctamente en la carpeta existente 'input'.")
+
+def verificar_estructura():
+    base_path = "input"
+    if not os.path.exists(base_path):
+        print("Error: La carpeta 'input' no existe después de la extracción.")
+        return False
+    for dataset in ["train", "test"]:
+        dataset_path = os.path.join(base_path, dataset)
+        if not os.path.exists(dataset_path):
+            print(f"Error: La carpeta '{dataset}' no existe en 'input'.")
+            return False
+        for sentiment in ["positive", "negative", "neutral"]:
+            sentiment_path = os.path.join(dataset_path, sentiment)
+            if not os.path.exists(sentiment_path):
+                print(f"Advertencia: La carpeta '{sentiment}' no existe en '{dataset}'.")
+    return True
+
+def procesar_datos():
+    if not verificar_estructura():
+        return
+    
+    datasets = {"train": [], "test": []}
+    base_path = "input"
+    
+    for dataset in ["train", "test"]:
+        dataset_path = os.path.join(base_path, dataset)
+        for sentiment in ["positive", "negative", "neutral"]:
+            sentiment_path = os.path.join(dataset_path, sentiment)
+            if not os.path.exists(sentiment_path):
+                continue  # Evita errores si la carpeta no existe
+            for file_name in os.listdir(sentiment_path):
+                file_path = os.path.join(sentiment_path, file_name)
+                with open(file_path, "r", encoding="utf-8") as file:
+                    text = file.read().strip()
+                    datasets[dataset].append([text, sentiment])
+    
+    # Guardar en CSV
+    output_path = "files/output"
+    os.makedirs(output_path, exist_ok=True)
+    
+    for dataset, data in datasets.items():
+        df = pd.DataFrame(data, columns=["phrase", "target"])
+        df.to_csv(os.path.join(output_path, f"{dataset}_dataset.csv"), index=False, encoding="utf-8")
+    
+    print("Archivos CSV generados correctamente.")
+
+def pregunta_01():
+    descomprimir_archivo()
+    procesar_datos()
+
+# Ejecutar la función
+pregunta_01()
